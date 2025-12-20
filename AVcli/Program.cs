@@ -1,4 +1,4 @@
-﻿// Time wasted on both refactoring the prototype and writting and debbuging the prototype it self : 17hrs 00mins
+﻿// Time wasted on both refactoring the prototype and writting and debbuging : 23hrs 30mins
 
 
 using Antivirus.core.Classes.logs;
@@ -72,23 +72,75 @@ class Program
             }
             else
             {
-                try
-                {
-                    await FileScanner.FileScannerInstance.ProcessFileAsync(filepath);
-                }
-                catch (Exception ex)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($" Unexpected error occured in ProcessUserInput | ERROR : {ex.Message}");
-                }
+                await ProcessFile(filepath);
             }
         }
         catch (Exception ex)
         {
-            logmsg.Instance.Log(ex.ToString());
+            logmsg.Instance.Log(ex.Message);
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"\n Unexpected error occured while processing user input | ERROR => {ex.Message}");
             Console.ResetColor();
         }
     }
+    public static async Task ProcessFile(string path)
+    {
+        //var dirs = Directory.GetDirectories(path);
+        Stack<string> dirs = new Stack<string>();
+        dirs.Push(path);
+        while (dirs.Count > 0)
+        {
+            
+            var curDir = dirs.Pop();
+            try
+            {
+                
+                try
+                {
+                    var directories = Directory.EnumerateDirectories(curDir);
+                    foreach (var d in directories)
+                    {
+                        var files = Directory.EnumerateFiles(d);
+                        foreach(var file in files)
+                        {
+                            
+                            await FileScanner.FileScannerInstance.ScanFileAsync(file);
+                        }
+
+                        if (Directory.Exists(d))
+                        {
+                            Console.WriteLine($"directory <{d}> exists");
+                            dirs.Push(d);
+                           
+                                
+                        }
+                    }
+                }
+                catch(UnauthorizedAccessException uaex)
+                {
+                    Console.ForegroundColor= ConsoleColor.Red;
+                    Console.WriteLine($"ERROR : {uaex.Message} | SKIPPING FILE");
+                    Console.ResetColor();
+                }
+                catch (Exception ex)
+                {
+                   Console.ForegroundColor = ConsoleColor.Red ;
+                    Console.WriteLine($" ERROR : {ex.Message}");
+                }
+                
+               
+
+            }
+            catch(Exception ex)
+            {
+                Console.ForegroundColor= ConsoleColor.Red;
+                Console.WriteLine($" ERROR : {ex.Message}");
+                Console.ResetColor();
+            }
+        }
+
+    }
+
+
 }
+

@@ -5,7 +5,7 @@ namespace AVcore.classes
     public class FileScanner
     {
         public static FileScanner FileScannerInstance { get; } = new FileScanner();
-        public static bool IsDirectory = false;
+        public bool IsDirectory { get; set; }
 
         // FOR storing file extensions, i plan on making a file that checks the magic bytes to determine the extension in the future!
         public static List<string> RiskyExtensions = new List<string>()
@@ -13,91 +13,50 @@ namespace AVcore.classes
             "*.exe", "*.com", ".*scr", "*.dll", "*.ocx", "*.sys", "*.msi", "*.cab", "*.appx", "*.bat", "*.ps1", "*.vbs", "*.js", "*.docm", "*.xlsm"
         };
 
-        public async Task<string> ProcessFileAsync(string? filepath)
+
+        public async Task<string> CheckForNextDirAsync(string filepath)
         {
-            while (true)
-            {
-                Thread.Sleep(300);
-                if (File.Exists(filepath))
-                {
-
-
-                    try
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($" File <{filepath}> exists");
-                        await ScanFileAsync(filepath);
-                        Console.ResetColor();
-
-                        return filepath;
-
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"\n Unexpected error occured in ProcessFileAsync | ERROR : {ex.Message}\n");
-                        Console.ResetColor();
-                    }
-                }
-                else if (Directory.Exists(filepath))
-                {
-
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    try
-                    {
-                        var Files = Directory.EnumerateFiles(filepath, "*", SearchOption.AllDirectories);
-
-
-                        foreach (string file in Files)
-                        {
-                            Thread.Sleep(300);
-                            try
-                            {
-                                await ScanFileAsync(file);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine($" Unexpected error occured in ProcessFileAsync | ERROR : {ex.Message}");
-                                Console.ResetColor();
-                            }
-                        }
-
-                    }
-                    catch(UnauthorizedAccessException uaex)
-                    {
-                        Console.ForegroundColor= ConsoleColor.Red;
-                        Console.WriteLine($" Unauthorized to the file/directory <{filepath}> Try running the app with elevated privilages!");
-                        Console.WriteLine($" | ERROR : {uaex.Message}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($" Unexpeted error occured trying to enumerate files | ERROR : {ex.Message}");
-                        Console.ResetColor();
-                    }
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($" File/Directory <{filepath}>, not found");
-                    Console.ResetColor();
-                }
-                Thread.Sleep(300);
-                return filepath;
-
-            }
-        }
-        public async Task ScanFileAsync(string? file)
-        {
-            logmsg.Instance.Log($"\n Proceeding with scanning <{file}>");
-            
-            Console.ForegroundColor= ConsoleColor.Green;
+            Thread.Sleep(100);
+            var files = Directory.EnumerateFiles(filepath);
 
             try
             {
+
+                foreach (var file in files)
+                {
+                    Console.WriteLine($"<{file}> is a file");
+
+                }
+
+
+            }
+            catch (UnauthorizedAccessException uaex)
+            {
+                Console.WriteLine($"Unauthorized | ERROR : {uaex.Message}");
+                await CheckForNextDirAsync(filepath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+
+            return "";
+        }
+
+
+        public async Task ScanFileAsync(string? file)
+        {
+            logmsg.Instance.Log($"\n Proceeding with scanning <{file}>");
+
+
+
+            try
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
                 await hasher.GetHasher.asyncHash(file);
                 Console.WriteLine("Hashed sending to the api");
+                Console.ResetColor();
             }
             catch (Exception ex)
             {
