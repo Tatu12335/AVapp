@@ -6,7 +6,7 @@ using AVcore.classes;
 
 class Program
 {
-
+    public static bool Isfile = false;
 
     static async Task Main(string[] args)
     {
@@ -90,50 +90,58 @@ class Program
         dirs.Push(path);
         while (dirs.Count > 0)
         {
-            
             var curDir = dirs.Pop();
             try
             {
-                
-                try
+                if (Directory.Exists(curDir) || File.Exists(curDir))
                 {
-                    var directories = Directory.EnumerateDirectories(curDir);
-                    foreach (var d in directories)
+                    if (File.Exists(curDir))
                     {
-                        var files = Directory.EnumerateFiles(d);
-                        foreach(var file in files)
+                        await FileScanner.FileScannerInstance.ScanFileAsync(curDir);
+                    }
+                    else
+                    {
+                        try
                         {
-                            
-                            await FileScanner.FileScannerInstance.ScanFileAsync(file);
-                        }
+                            var directories = Directory.EnumerateDirectories(curDir);
 
-                        if (Directory.Exists(d))
+                            foreach (var d in directories)
+                            {
+
+                                var files = Directory.EnumerateFiles(d);
+                                foreach (var file in files)
+                                {
+
+                                    Console.WriteLine(file.ToString());
+                                    await FileScanner.FileScannerInstance.ScanFileAsync(file.ToString());
+                                }
+
+
+
+                                dirs.Push(d);
+
+                            }
+                        }
+                        catch (UnauthorizedAccessException uaex)
                         {
-                            Console.WriteLine($"directory <{d}> exists");
-                            dirs.Push(d);
-                           
-                                
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"ERROR : {uaex.Message} | SKIPPING FILE");
+                            Console.ResetColor();
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($" ERROR : {ex.Message}");
                         }
                     }
                 }
-                catch(UnauthorizedAccessException uaex)
-                {
-                    Console.ForegroundColor= ConsoleColor.Red;
-                    Console.WriteLine($"ERROR : {uaex.Message} | SKIPPING FILE");
-                    Console.ResetColor();
-                }
-                catch (Exception ex)
-                {
-                   Console.ForegroundColor = ConsoleColor.Red ;
-                    Console.WriteLine($" ERROR : {ex.Message}");
-                }
-                
-               
+
+
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Console.ForegroundColor= ConsoleColor.Red;
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($" ERROR : {ex.Message}");
                 Console.ResetColor();
             }

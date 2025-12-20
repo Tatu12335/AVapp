@@ -13,38 +13,6 @@ namespace AVcore.classes
             "*.exe", "*.com", ".*scr", "*.dll", "*.ocx", "*.sys", "*.msi", "*.cab", "*.appx", "*.bat", "*.ps1", "*.vbs", "*.js", "*.docm", "*.xlsm"
         };
 
-
-        public async Task<string> CheckForNextDirAsync(string filepath)
-        {
-            Thread.Sleep(100);
-            var files = Directory.EnumerateFiles(filepath);
-
-            try
-            {
-
-                foreach (var file in files)
-                {
-                    Console.WriteLine($"<{file}> is a file");
-
-                }
-
-
-            }
-            catch (UnauthorizedAccessException uaex)
-            {
-                Console.WriteLine($"Unauthorized | ERROR : {uaex.Message}");
-                await CheckForNextDirAsync(filepath);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
-
-            return "";
-        }
-
-
         public async Task ScanFileAsync(string? file)
         {
             logmsg.Instance.Log($"\n Proceeding with scanning <{file}>");
@@ -53,9 +21,13 @@ namespace AVcore.classes
 
             try
             {
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine(file);
+                Console.ResetColor();
                 Console.ForegroundColor = ConsoleColor.Green;
+
                 await hasher.GetHasher.asyncHash(file);
-                Console.WriteLine("Hashed sending to the api");
+                //Console.WriteLine("Hashed sending to the api");
                 Console.ResetColor();
             }
             catch (Exception ex)

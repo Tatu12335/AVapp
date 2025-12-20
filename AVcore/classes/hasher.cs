@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using AVcore.classes.abuse.ch_client;
+using System.Security.Cryptography;
 
 namespace AVcore.classes
 {
@@ -46,9 +47,21 @@ namespace AVcore.classes
                         byte[] hashvalue = await sha256.ComputeHashAsync(fS).ConfigureAwait(false);
 
                         string hashhex = Convert.ToHexString(hashvalue).ToLowerInvariant();
-                        Console.WriteLine(" Hash computed");
-                        Console.WriteLine(hashhex);
-
+                        //Console.WriteLine(" Hash computed");
+                        //Console.WriteLine(hashhex + " <====HEXSTRING, Sending to the api=====>");
+                        try
+                        {
+                            //Console.WriteLine(" Waiting for a response from MalwareBazaar...");
+                            // Await the api call any exception will be caught below
+                            await MalwareBazaarClient.GetClient.CheckHashStatus(hashhex).ConfigureAwait(false);
+                            //Console.WriteLine(" API call completed.");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(" Error in calling the api | ERROR :  " + ex.Message);
+                            Console.ResetColor();
+                        }
                         break;
 
                     }
