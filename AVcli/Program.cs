@@ -1,8 +1,9 @@
-﻿// Time wasted on both refactoring the prototype and writting and debbuging : 23hrs 30mins
+﻿// Time wasted on both refactoring the prototype and writting and debbuging : 26hrs 00mins
 
 
 using Antivirus.core.Classes.logs;
 using AVcore.classes;
+using System.Runtime.InteropServices;
 
 class Program
 {
@@ -90,54 +91,48 @@ class Program
         dirs.Push(path);
         while (dirs.Count > 0)
         {
+
             var curDir = dirs.Pop();
             try
             {
-                if (Directory.Exists(curDir) || File.Exists(curDir))
+               
+                try
                 {
-                    if (File.Exists(curDir))
+
+                    var directories = Directory.EnumerateDirectories(curDir);
+
+                    foreach (var d in directories)
                     {
-                        await FileScanner.FileScannerInstance.ScanFileAsync(curDir);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var directories = Directory.EnumerateDirectories(curDir);
-
-                            foreach (var d in directories)
-                            {
-
-                                var files = Directory.EnumerateFiles(d);
-                                foreach (var file in files)
-                                {
-
-                                    Console.WriteLine(file.ToString());
-                                    await FileScanner.FileScannerInstance.ScanFileAsync(file.ToString());
-                                }
 
 
-
-                                dirs.Push(d);
-
-                            }
+                        Console.WriteLine($"{d}");
+                        var files2 = Directory.EnumerateFiles(d);
+                        foreach ( var file2 in files2)
+                        { 
+                            await FileScanner.FileScannerInstance.ScanFileAsync(file2); 
                         }
-                        catch (UnauthorizedAccessException uaex)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($"ERROR : {uaex.Message} | SKIPPING FILE");
-                            Console.ResetColor();
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($" ERROR : {ex.Message}");
-                        }
+
+
+
+                        dirs.Push(d);
+
                     }
                 }
 
 
-
+                catch (UnauthorizedAccessException uaex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"ERROR : {uaex.Message} | SKIPPING FILE");
+                    Console.ResetColor();
+                }
+                catch (Exception ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($" ERROR : {ex.Message}");
+                }
+                    
+                
             }
             catch (Exception ex)
             {

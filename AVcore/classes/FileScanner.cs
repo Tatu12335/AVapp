@@ -27,7 +27,7 @@ namespace AVcore.classes
                 Console.ForegroundColor = ConsoleColor.Green;
 
                 await hasher.GetHasher.asyncHash(file);
-                //Console.WriteLine("Hashed sending to the api");
+                
                 Console.ResetColor();
             }
             catch (Exception ex)
