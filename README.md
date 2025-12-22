@@ -13,5 +13,5 @@ First i was thinking how would one create a "Antivirus" based on some already ex
 And how would one even make such a project, then i sat down and started researching stuff out. "Tbh this shit doesnt seem that compilcated" 
 I was kinda right but at the same time all the debugging and research, i have done as of 22.12.2025 is a lot, i have at this point sunk 11hrs to the project and i havent even done that much.
 I mean the core logic works and all but, the logic is very old fashioned so to speak and, doesnt use much of async await, WHICH i plan on corectting at some point, 
-once all of the methods and classes i have in my head are written down. I also need to research publishing alot because i havent published anything officially at this point.
+once all of the methods and classes i have in my head are written down. I also need to research publishing alot because i havent published anything officially at this point.I also plan on putting the packetsniffer i made a little while ago as a part of the "av" i mean its not a real antivirus but maybe someday it will be.
 
