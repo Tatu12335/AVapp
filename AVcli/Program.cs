@@ -1,13 +1,13 @@
-﻿// Time wasted on both refactoring the prototype and writting and debbuging : 26hrs 00mins
+﻿// Time wasted on both refactoring the prototype and writting and debbuging : 27hrs 00mins
 
 
 using Antivirus.core.Classes.logs;
 using AVcore.classes;
 using System.Runtime.InteropServices;
-
+using System.IO.Compression;
 class Program
 {
-    public static bool Isfile = false;
+  
 
     static async Task Main(string[] args)
     {
@@ -86,7 +86,7 @@ class Program
     }
     public static async Task ProcessFile(string path)
     {
-        //var dirs = Directory.GetDirectories(path);
+        // I plan on getting the extensions from the magic bytes have not implemented it yet tho, this will do for now.
         Stack<string> dirs = new Stack<string>();
         dirs.Push(path);
         while (dirs.Count > 0)
@@ -103,16 +103,23 @@ class Program
 
                     foreach (var d in directories)
                     {
-
-
-                        Console.WriteLine($"{d}");
                         var files2 = Directory.EnumerateFiles(d);
+                        
                         foreach ( var file2 in files2)
-                        { 
-                            await FileScanner.FileScannerInstance.ScanFileAsync(file2); 
+                        {
+                            
+                            var extension = Path.GetExtension(file2).ToLower();
+                            if (extension.Equals(".zip"))
+                            {
+                                Console.WriteLine("HRLLO");
+                                await FileScanner.FileScannerInstance.IsZip(file2);
+                            }
+                            else
+                            {
+                                await FileScanner.FileScannerInstance.ScanFileAsync(file2);
+                            }
+                           
                         }
-
-
 
                         dirs.Push(d);
 

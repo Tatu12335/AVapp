@@ -1,4 +1,5 @@
 ﻿using Antivirus.core.Classes.logs;
+using System.IO.Compression;
 
 namespace AVcore.classes
 {
@@ -39,6 +40,62 @@ namespace AVcore.classes
 
             Console.ResetColor();
 
+        }
+        public async Task IsZip( string path)
+        {
+            
+            try
+            {
+                
+                if (new FileInfo(path).Length > 104000000)
+                {
+                    return;
+                }
+
+                using (FileStream fS = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (ZipArchive zipArchive = new ZipArchive(fS, ZipArchiveMode.Read))
+                {
+                    // Protection against Entry Bombs
+                    if (zipArchive.Entries.Count > 1000) 
+                    {
+                        logmsg.Instance.Log($"Zip file <{path}> entries is over the limit");
+                        return;
+                    }
+
+                    long currentTotal = 0;
+                    foreach (var entry in zipArchive.Entries)
+                    {
+                        currentTotal += entry.Length;
+
+                        // Early Exit, stop counting as soon as we hit the limit
+                        if (currentTotal > 100000000)
+                        {
+                            Console.WriteLine("size is over the limit. Skipping.");
+                            return;
+                        }
+                        
+                        
+                        if (entry.CompressedLength > 0)
+                        {
+                            double ratio = (double)entry.Length / entry.CompressedLength;
+                            if (ratio > 100) 
+                            { // potential zip bomb 
+                                return; 
+                            }
+                        }
+                        else
+                        {
+                            await ScanFileAsync(path);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error processing zip file: {ex.Message}");
+                Console.ResetColor();
+            }
         }
         public void Help()
         {
