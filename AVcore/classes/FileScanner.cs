@@ -1,4 +1,6 @@
 ﻿using Antivirus.core.Classes.logs;
+using System.ComponentModel.Design;
+using Antivirus.core;
 using System.IO.Compression;
 
 namespace AVcore.classes
@@ -26,10 +28,16 @@ namespace AVcore.classes
                 Console.WriteLine(file);
                 Console.ResetColor();
                 Console.ForegroundColor = ConsoleColor.Green;
+                //if (File.Exists(file))
+                //{
+                    await hasher.GetHasher.asyncHash(file);
 
-                await hasher.GetHasher.asyncHash(file);
-                
-                Console.ResetColor();
+                //}
+                //else if(Directory.Exists(file))
+               
+
+
+                    Console.ResetColor();
             }
             catch (Exception ex)
             {
@@ -41,13 +49,13 @@ namespace AVcore.classes
             Console.ResetColor();
 
         }
-        public async Task IsZip( string path)
+        public async Task IsZip(string path)
         {
-            
+
             try
             {
-                
-                if (new FileInfo(path).Length > 104000000)
+
+                if (new FileInfo(path).Length > 100000000)
                 {
                     return;
                 }
@@ -56,7 +64,7 @@ namespace AVcore.classes
                 using (ZipArchive zipArchive = new ZipArchive(fS, ZipArchiveMode.Read))
                 {
                     // Protection against Entry Bombs
-                    if (zipArchive.Entries.Count > 1000) 
+                    if (zipArchive.Entries.Count > 1000)
                     {
                         logmsg.Instance.Log($"Zip file <{path}> entries is over the limit");
                         return;
@@ -66,27 +74,34 @@ namespace AVcore.classes
                     foreach (var entry in zipArchive.Entries)
                     {
                         currentTotal += entry.Length;
-
+                        var Path2 = entry.FullName;
                         // Early Exit, stop counting as soon as we hit the limit
                         if (currentTotal > 100000000)
                         {
                             Console.WriteLine("size is over the limit. Skipping.");
                             return;
                         }
-                        
-                        
+                        foreach (var file in zipArchive.Entries)
+                        {
+
+                            await ScanFileAsync(file.FullName);
+                        }
+
+
                         if (entry.CompressedLength > 0)
                         {
                             double ratio = (double)entry.Length / entry.CompressedLength;
-                            if (ratio > 100) 
+                            if (ratio > 100)
                             { // potential zip bomb 
-                                return; 
+                                return;
+                            }
+                            else
+                            {
+
+                                await ScanFileAsync(Path2);
                             }
                         }
-                        else
-                        {
-                            await ScanFileAsync(path);
-                        }
+
                     }
                 }
             }
@@ -111,6 +126,58 @@ namespace AVcore.classes
             Console.WriteLine("This is a virus scanner developed by Tatu1335,");
 
             Console.ResetColor();
+        }
+        public void QuarantineFile()
+        {
+            // Method to quarantine an infected file
+        }
+        public void DeleteFile()
+        {
+            // Method to delete an infected file
+        }
+        public void UpdateVirusDefinitions()
+        {
+            // Method to update virus definitions
+        }
+        public void ScheduleScan()
+        {
+            // Method to schedule a scan
+        }
+        public void RealTimeProtection()
+        {
+            // Method to enable real-time protection
+        }
+        public void ExcludeFile()
+        {
+            // Method to exclude a file from scanning
+        }
+        public void IncludeFile()
+        {
+            // Method to include a file in scanning
+        }
+        public void RestoreFile()
+        {
+            // Method to restore a quarantined file
+        }
+        public void NotifyUser()
+        {
+            // Method to notify the user about scan results
+        }
+        public void LogScanActivity()
+        {
+            // Method to log scan activity
+        }
+        public void ConfigureSettings()
+        {
+            // Method to configure scanner settings
+        }
+        public void CheckForUpdates()
+        {
+            // Method to check for software updates
+        }
+        public void OptimizePerformance()
+        {
+            // Method to optimize scanner performance
         }
     }
 }

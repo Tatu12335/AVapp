@@ -3,11 +3,11 @@
 
 using Antivirus.core.Classes.logs;
 using AVcore.classes;
-using System.Runtime.InteropServices;
-using System.IO.Compression;
-class Program
+
+
+class Program1
 {
-  
+    public static Program1 MainInstance { get; } = new Program1();
 
     static async Task Main(string[] args)
     {
@@ -87,66 +87,85 @@ class Program
     public static async Task ProcessFile(string path)
     {
         // I plan on getting the extensions from the magic bytes have not implemented it yet tho, this will do for now.
+        path = Path.GetFullPath(path);
         Stack<string> dirs = new Stack<string>();
         dirs.Push(path);
+
         while (dirs.Count > 0)
         {
 
             var curDir = dirs.Pop();
+
+
+
             try
             {
-               
-                try
+
+                var directories = Directory.EnumerateDirectories(curDir, "*");
+                //var files2 = Directory.EnumerateFiles(curDir,"*");
+
+                /*foreach(var file in files2)
                 {
+                    var extensions = Path.GetExtension(file).ToLower();
 
-                    var directories = Directory.EnumerateDirectories(curDir);
-
-                    foreach (var d in directories)
+                    if (extensions == ".zip")
                     {
-                        var files2 = Directory.EnumerateFiles(d);
-                        
-                        foreach ( var file2 in files2)
+                        await FileScanner.FileScannerInstance.IsZip(file);
+                        return;
+                    }
+                    else
+                    {
+                        await FileScanner.FileScannerInstance.ScanFileAsync(file);
+                    }
+                }*/
+
+                foreach (var d in directories)
+                {
+                    //var directories2 = Directory.EnumerateDirectories(d,"*");
+                    var files = Directory.EnumerateFiles(d, "*");
+
+
+                    foreach (var file in files)
+                    {
+
+                        var extension = Path.GetExtension(file).ToLower();
+
+                        if (extension == ".zip")
                         {
-                            
-                            var extension = Path.GetExtension(file2).ToLower();
-                            if (extension.Equals(".zip"))
-                            {
-                                Console.WriteLine("HRLLO");
-                                await FileScanner.FileScannerInstance.IsZip(file2);
-                            }
-                            else
-                            {
-                                await FileScanner.FileScannerInstance.ScanFileAsync(file2);
-                            }
-                           
+                            await FileScanner.FileScannerInstance.IsZip(file);
+                        }
+                        else
+                        {
+                            await FileScanner.FileScannerInstance.ScanFileAsync(file);
+
                         }
 
-                        dirs.Push(d);
-
                     }
+
+
+                    dirs.Push(d);
+
                 }
 
 
-                catch (UnauthorizedAccessException uaex)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"ERROR : {uaex.Message} | SKIPPING FILE");
-                    Console.ResetColor();
-                }
-                catch (Exception ex)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($" ERROR : {ex.Message}");
-                }
-                    
-                
+            }
+
+
+            catch (UnauthorizedAccessException uaex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"ERROR : {uaex.Message} | SKIPPING FILE");
+                Console.ResetColor();
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($" ERROR : {ex.Message}");
-                Console.ResetColor();
             }
+
+
+
+
         }
 
     }
