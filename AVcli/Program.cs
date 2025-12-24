@@ -1,8 +1,9 @@
-﻿// Time wasted on both refactoring the prototype and writting and debbuging : 27hrs 00mins
+﻿// Time wasted on both refactoring the prototype and writting and debbuging : 31hrs 00mins
 
 
 using Antivirus.core.Classes.logs;
 using AVcore.classes;
+using System.Net.WebSockets;
 
 
 class Program1
@@ -97,60 +98,57 @@ class Program1
             var curDir = dirs.Pop();
 
 
-
             try
             {
-
-                var directories = Directory.EnumerateDirectories(curDir, "*");
-                //var files2 = Directory.EnumerateFiles(curDir,"*");
-
-                /*foreach(var file in files2)
+                var files2 = Directory.EnumerateFiles(curDir,"*");
+                foreach (var file in files2)
                 {
                     var extensions = Path.GetExtension(file).ToLower();
-
                     if (extensions == ".zip")
                     {
                         await FileScanner.FileScannerInstance.IsZip(file);
-                        return;
+                    }
+                    else if (Directory.Exists(file))
+                    {
+                        continue;
                     }
                     else
                     {
                         await FileScanner.FileScannerInstance.ScanFileAsync(file);
                     }
-                }*/
+                }
+                    var directories = Directory.EnumerateDirectories(curDir);
 
-                foreach (var d in directories)
-                {
-                    //var directories2 = Directory.EnumerateDirectories(d,"*");
-                    var files = Directory.EnumerateFiles(d, "*");
-
-
-                    foreach (var file in files)
+                    foreach (var d in directories)
                     {
+                        //var directories2 = Directory.EnumerateDirectories(d,"*");
+                        var files = Directory.EnumerateFiles(d, "*");
 
-                        var extension = Path.GetExtension(file).ToLower();
-
-                        if (extension == ".zip")
+                        foreach (var file1 in files)
                         {
-                            await FileScanner.FileScannerInstance.IsZip(file);
-                        }
-                        else
-                        {
-                            await FileScanner.FileScannerInstance.ScanFileAsync(file);
+                            var extension = Path.GetExtension(file1).ToLower();
+
+                            if (extension == ".zip")
+                            {
+                                await FileScanner.FileScannerInstance.IsZip(file1);
+                            }
+                            else
+                            {
+
+                                await FileScanner.FileScannerInstance.ScanFileAsync(file1);
+
+                            }
 
                         }
+
+                        dirs.Push(d);
 
                     }
+                
 
-
-                    dirs.Push(d);
-
-                }
 
 
             }
-
-
             catch (UnauthorizedAccessException uaex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;

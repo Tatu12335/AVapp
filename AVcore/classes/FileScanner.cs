@@ -1,6 +1,4 @@
 ﻿using Antivirus.core.Classes.logs;
-using System.ComponentModel.Design;
-using Antivirus.core;
 using System.IO.Compression;
 
 namespace AVcore.classes
@@ -28,16 +26,19 @@ namespace AVcore.classes
                 Console.WriteLine(file);
                 Console.ResetColor();
                 Console.ForegroundColor = ConsoleColor.Green;
-                //if (File.Exists(file))
-                //{
+                if (File.Exists(file))
+                {
                     await hasher.GetHasher.asyncHash(file);
 
-                //}
-                //else if(Directory.Exists(file))
-               
+                }
+                else if (Directory.Exists(file))
+                {
+                    Console.WriteLine("hello");
+                }
 
 
-                    Console.ResetColor();
+
+                Console.ResetColor();
             }
             catch (Exception ex)
             {
@@ -51,65 +52,71 @@ namespace AVcore.classes
         }
         public async Task IsZip(string path)
         {
-
-            try
+            path = Path.GetFullPath(path);
+            while (true)
             {
-
-                if (new FileInfo(path).Length > 100000000)
+                try
                 {
-                    return;
-                }
 
-                using (FileStream fS = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (ZipArchive zipArchive = new ZipArchive(fS, ZipArchiveMode.Read))
-                {
-                    // Protection against Entry Bombs
-                    if (zipArchive.Entries.Count > 1000)
+
+                    if (new FileInfo(path).Length > 100000000)
                     {
-                        logmsg.Instance.Log($"Zip file <{path}> entries is over the limit");
                         return;
                     }
 
-                    long currentTotal = 0;
-                    foreach (var entry in zipArchive.Entries)
+                    using (FileStream fS = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (ZipArchive zipArchive = new ZipArchive(fS, ZipArchiveMode.Read))
                     {
-                        currentTotal += entry.Length;
-                        var Path2 = entry.FullName;
-                        // Early Exit, stop counting as soon as we hit the limit
-                        if (currentTotal > 100000000)
+                        // Protection against Entry Bombs
+                        if (zipArchive.Entries.Count > 1000)
                         {
-                            Console.WriteLine("size is over the limit. Skipping.");
+                            logmsg.Instance.Log($"Zip file <{path}> entries is over the limit");
                             return;
                         }
-                        foreach (var file in zipArchive.Entries)
+
+                        long currentTotal = 0;
+                        foreach (var entry in zipArchive.Entries)
                         {
+                            currentTotal += entry.Length;
+                            char CharsToTrim = '/';
+                            
+                            
+                            var pathAndEntry = Path.Combine(path, entry.Name);
 
-                            await ScanFileAsync(file.FullName);
-                        }
-
-
-                        if (entry.CompressedLength > 0)
-                        {
-                            double ratio = (double)entry.Length / entry.CompressedLength;
-                            if (ratio > 100)
-                            { // potential zip bomb 
+                            await ScanFileAsync(pathAndEntry.Replace(CharsToTrim,'\\'));
+                            // Early Exit, stop counting as soon as we hit the limit
+                            if (currentTotal > 100000000)
+                            {
+                                Console.WriteLine("size is over the limit. Skipping.");
                                 return;
                             }
-                            else
+                            
+
+
+                            if (entry.CompressedLength > 0)
                             {
+                                double ratio = (double)entry.Length / entry.CompressedLength;
+                                if (ratio > 100)
+                                { // potential zip bomb 
+                                    return;
+                                }
+                                else
+                                {
 
-                                await ScanFileAsync(Path2);
+                                    await ScanFileAsync(path+entry);
+                                    return;
+                                }
                             }
-                        }
 
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Error processing zip file: {ex.Message}");
-                Console.ResetColor();
+                catch (Exception ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"Error processing zip file: {ex.Message}");
+                    Console.ResetColor();
+                }
             }
         }
         public void Help()
