@@ -1,9 +1,8 @@
-﻿// Time wasted on both refactoring the prototype and writting and debbuging : 31hrs 00mins
+﻿// Time wasted on both refactoring the prototype and writting and debbuging : 32hrs 00mins
 
 
 using Antivirus.core.Classes.logs;
 using AVcore.classes;
-using System.Net.WebSockets;
 
 
 class Program1
@@ -100,52 +99,55 @@ class Program1
 
             try
             {
-                var files2 = Directory.EnumerateFiles(curDir,"*");
-                foreach (var file in files2)
+                // This doesnt look right
+                var files = Directory.EnumerateFiles(curDir);
+
+                foreach (var file in files)
                 {
-                    var extensions = Path.GetExtension(file).ToLower();
-                    if (extensions == ".zip")
+                    var extension = Path.GetExtension(file).ToLower();
+
+                    if (extension == ".zip")
                     {
-                        await FileScanner.FileScannerInstance.IsZip(file);
-                    }
-                    else if (Directory.Exists(file))
-                    {
-                        continue;
+                        await FileScanner.FileScannerInstance.IsZip(Path.GetFullPath(file));
+                        break;
                     }
                     else
                     {
                         await FileScanner.FileScannerInstance.ScanFileAsync(file);
                     }
                 }
-                    var directories = Directory.EnumerateDirectories(curDir);
 
-                    foreach (var d in directories)
+
+                var directories = Directory.EnumerateDirectories(curDir);
+
+                foreach (var d in directories)
+                {
+                    //var directories2 = Directory.EnumerateDirectories(d,"*");
+                    var files2 = Directory.EnumerateFiles(d, "*");
+
+                    foreach (var file1 in files2)
                     {
-                        //var directories2 = Directory.EnumerateDirectories(d,"*");
-                        var files = Directory.EnumerateFiles(d, "*");
+                        var extension = Path.GetExtension(file1).ToLower();
 
-                        foreach (var file1 in files)
+                        if (extension == ".zip")
                         {
-                            var extension = Path.GetExtension(file1).ToLower();
+                            await FileScanner.FileScannerInstance.IsZip(file1);
+                        }
+                        else
+                        {
 
-                            if (extension == ".zip")
-                            {
-                                await FileScanner.FileScannerInstance.IsZip(file1);
-                            }
-                            else
-                            {
-
-                                await FileScanner.FileScannerInstance.ScanFileAsync(file1);
-
-                            }
+                            await FileScanner.FileScannerInstance.ScanFileAsync(file1);
 
                         }
 
-                        dirs.Push(d);
-
                     }
-                
 
+                    dirs.Push(d);
+
+                }
+
+
+                //
 
 
             }
@@ -157,8 +159,25 @@ class Program1
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($" ERROR : {ex.Message}");
+                // neither does this
+                try
+                {
+                    var exten = Path.GetExtension(curDir).ToLower();
+                    if (exten == ".zip")
+                    {
+                        await FileScanner.FileScannerInstance.IsZip(curDir);
+                    }
+                    else
+                    {
+                        await FileScanner.FileScannerInstance.ScanFileAsync(curDir);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"ERROR | {e.Message}");
+                    Console.ResetColor();
+                }
             }
 
 

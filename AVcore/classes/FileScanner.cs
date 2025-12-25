@@ -1,5 +1,10 @@
-﻿using Antivirus.core.Classes.logs;
+﻿
+using Antivirus.core.Classes.logs;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
+using System.Threading.Tasks;
 
 namespace AVcore.classes
 {
@@ -14,11 +19,9 @@ namespace AVcore.classes
             "*.exe", "*.com", ".*scr", "*.dll", "*.ocx", "*.sys", "*.msi", "*.cab", "*.appx", "*.bat", "*.ps1", "*.vbs", "*.js", "*.docm", "*.xlsm"
         };
 
-        public async Task ScanFileAsync(string? file)
+        public async Task ScanFileAsync(string file)
         {
             logmsg.Instance.Log($"\n Proceeding with scanning <{file}>");
-
-
 
             try
             {
@@ -26,17 +29,8 @@ namespace AVcore.classes
                 Console.WriteLine(file);
                 Console.ResetColor();
                 Console.ForegroundColor = ConsoleColor.Green;
-                if (File.Exists(file))
-                {
-                    await hasher.GetHasher.asyncHash(file);
 
-                }
-                else if (Directory.Exists(file))
-                {
-                    Console.WriteLine("hello");
-                }
-
-
+                await hasher.GetHasher.asyncHash(file);
 
                 Console.ResetColor();
             }
@@ -48,77 +42,167 @@ namespace AVcore.classes
             }
 
             Console.ResetColor();
-
         }
+        // iszip() might or might not be developed by github copilot ;), nah but on a more serious note i carefully look it through.
         public async Task IsZip(string path)
         {
-            path = Path.GetFullPath(path);
-            while (true)
+            if (string.IsNullOrEmpty(path))
             {
+                return;
+            }
+
+            // Normalize and validate input
+            path = Path.GetFullPath(path);
+
+            if (!File.Exists(path))
+            {
+                //do nothing
+                return;
+            }
+
+            const long MaxTotalUncompressed = 100_000_000; // 100 MB
+            const int MaxEntries = 1000;
+            const double MaxCompressionRatio = 100.0;
+
+            try
+            {
+                var fi = new FileInfo(path);
+                if (fi.Length > MaxTotalUncompressed)
+                {
+                    logmsg.Instance.Log($" File <{path}> is larger than allowed limit.");
+                    return;
+                }
+
+                // Use safe FileStream with read sharing
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var zip = new ZipArchive(fs, ZipArchiveMode.Read, leaveOpen: false);
+
+                if (zip.Entries.Count > MaxEntries)
+                {
+                    logmsg.Instance.Log($" Zip file <{path}> entries are over the limit ({zip.Entries.Count} > {MaxEntries})");
+                    Console.WriteLine($" Zip file <{path}> entries are over the limit");
+                    return;
+                }
+
+                long currentTotalUncompressed = 0;
+
+                // Create a temporary extraction root for this archive
+                var tempRoot = Path.Combine(Path.GetTempPath(), "AVcore", Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(tempRoot);
+
                 try
                 {
-
-
-                    if (new FileInfo(path).Length > 100000000)
+                    foreach (var entry in zip.Entries)
                     {
-                        return;
-                    }
-
-                    using (FileStream fS = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    using (ZipArchive zipArchive = new ZipArchive(fS, ZipArchiveMode.Read))
-                    {
-                        // Protection against Entry Bombs
-                        if (zipArchive.Entries.Count > 1000)
+                        // Skip directory entries
+                        if (string.IsNullOrEmpty(entry.Name) && entry.FullName.EndsWith("/"))
                         {
-                            logmsg.Instance.Log($"Zip file <{path}> entries is over the limit");
+                            continue;
+                        }
+
+                        // Update totals and check limits
+                        currentTotalUncompressed += entry.Length;
+                        if (currentTotalUncompressed > MaxTotalUncompressed)
+                        {
+                            Console.WriteLine(" Total uncompressed size is over the limit. Skipping further entries.");
+                            logmsg.Instance.Log(" Total uncompressed size is over the limit. Skipping further entries.");
                             return;
                         }
 
-                        long currentTotal = 0;
-                        foreach (var entry in zipArchive.Entries)
+                        // Protection against zip-bomb by compression ratio if compressed length > 0
+                        if (entry.CompressedLength > 0)
                         {
-                            currentTotal += entry.Length;
-                            char CharsToTrim = '/';
-                            
-                            
-                            var pathAndEntry = Path.Combine(path, entry.Name);
-
-                            await ScanFileAsync(pathAndEntry.Replace(CharsToTrim,'\\'));
-                            // Early Exit, stop counting as soon as we hit the limit
-                            if (currentTotal > 100000000)
+                            double ratio = entry.Length / (double)entry.CompressedLength;
+                            if (double.IsInfinity(ratio) || double.IsNaN(ratio) || ratio > MaxCompressionRatio)
                             {
-                                Console.WriteLine("size is over the limit. Skipping.");
+                                logmsg.Instance.Log($" Potential zip bomb detected in <{path}> entry <{entry.FullName}> - ratio {ratio:F2}");
+                                Console.WriteLine($" Potential zip bomb detected in entry <{entry.FullName}> - skipping archive.");
                                 return;
                             }
-                            
+                        }
 
+                        // Build safe destination path and prevent zip-slip
+                        var destinationPath = Path.GetFullPath(Path.Combine(tempRoot, entry.FullName.Replace('/', Path.DirectorySeparatorChar)));
+                        if (!destinationPath.StartsWith(Path.GetFullPath(tempRoot), StringComparison.OrdinalIgnoreCase))
+                        {
+                            logmsg.Instance.Log($" Skipped entry with invalid path (zip slip): {entry.FullName}");
+                            continue;
+                        }
 
-                            if (entry.CompressedLength > 0)
+                        // Ensure directory exists
+                        var destDir = Path.GetDirectoryName(destinationPath);
+                        if (!string.IsNullOrEmpty(destDir))
+                        {
+                            Directory.CreateDirectory(destDir);
+                        }
+
+                        // Extract entry to temp file and scan it
+                        try
+                        {
+                            using var entryStream = entry.Open();
+                            using var destFs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                            await entryStream.CopyToAsync(destFs).ConfigureAwait(false);
+                        }
+                        catch (Exception exEntry)
+                        {
+                            logmsg.Instance.Log($" Failed to extract entry {entry.FullName}: {exEntry.Message}");
+                            continue;
+                        }
+
+                        // Now scan the extracted file
+                        try
+                        {
+                            await ScanFileAsync(destinationPath).ConfigureAwait(false);
+                        }
+                        catch (Exception exScan)
+                        {
+                            logmsg.Instance.Log($" Failed scanning extracted entry {entry.FullName}: {exScan.Message}");
+                        }
+
+                        // Optionally delete the extracted file immediately after scan
+                        try
+                        {
+                            if (File.Exists(destinationPath))
                             {
-                                double ratio = (double)entry.Length / entry.CompressedLength;
-                                if (ratio > 100)
-                                { // potential zip bomb 
-                                    return;
-                                }
-                                else
-                                {
-
-                                    await ScanFileAsync(path+entry);
-                                    return;
-                                }
+                                File.Delete(destinationPath);
                             }
-
+                        }
+                        catch
+                        {
+                            // ignore cleanup failures - temp root will remain for later cleanup
                         }
                     }
                 }
-                catch (Exception ex)
+                finally
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"Error processing zip file: {ex.Message}");
-                    Console.ResetColor();
+                    // Attempt to clean up the temporary extraction folder
+                    try
+                    {
+                        if (Directory.Exists(tempRoot))
+                        {
+                            Directory.Delete(tempRoot, recursive: true);
+                        }
+                    }
+                    catch
+                    {
+                        // ignore any cleanup errors - OS will clean temp eventually
+                    }
                 }
             }
+            catch (InvalidDataException)
+            {
+                // Not a zip archive
+                // Do nothing - caller can handle as regular file
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error processing zip file: {ex.Message}");
+                Console.ResetColor();
+                logmsg.Instance.Log($"Error processing zip file {path}: {ex.Message}");
+            }
         }
+
         public void Help()
         {
             Console.ForegroundColor = ConsoleColor.Blue;
@@ -126,6 +210,7 @@ namespace AVcore.classes
             Console.WriteLine(" For information about this virus scanner type --about or see the readme.md in this github repo.");
             Console.ResetColor();
         }
+
         public void About()
         {
             // Method to display about information
