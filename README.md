@@ -1,18 +1,44 @@
-README
+🛡️ AVcore - C# Security Suite
+AVcore is a specialized security project born from a desire to bridge the gap between low-level network analysis and high-level file system protection. It is an evolving antivirus core that combines local file scanning with real-time cloud-based threat intelligence.
 
------------------------------------TO START-----------------------------------
+🚀 The Journey
+After developing a Packet Sniffer, I wanted to push further into the cybersecurity domain. This project started with a simple question: "How does an antivirus actually work?" What seemed simple at first turned into an intensive deep dive. As of late 2025, I have invested over 11 hours into researching malware databases, debugging asynchronous file streams, and implementing security best practices. The project has shifted from a "simple script" idea into a structured .NET application utilizing modern async/await patterns.
 
-After the packet sniffer project that i kindof abbandoned, i mean it work but its not good and, 
-i havent done any post project clean up on it. 
-I started thinking what would i do next that would be kinda new but, at the same time well... 
-cyber security related. I started thinking that i would make some kinda of script but, i decided to go little farther 
-(not sure if that word is right), i started planing my antivirus.
+✨ Key Features
+🔍 Advanced File Scanning (FileScanner)
+The scanner doesn't just look at files; it understands the risks associated with them.
 
------------------------------------THE PLANNING--------------------------------
+Zip-Bomb Protection: Monitors compression ratios and uncompressed sizes to prevent "decompression bombs" from crashing the system.
 
-First i was thinking how would one create a "Antivirus" based on some already existing database of malware samples. 
-And how would one even make such a project, then i sat down and started researching stuff out. "Tbh this shit doesnt seem that compilcated" 
-I was kinda right but at the same time all the debugging and research, i have done as of 22.12.2025 is a lot, i have at this point sunk 11hrs to the project and i havent even done that much.
-I mean the core logic works and all but, the logic is very old fashioned so to speak and, doesnt use much of async await, WHICH i plan on corectting at some point, 
-once all of the methods and classes i have in my head are written down. I also need to research publishing alot because i havent published anything officially at this point.I also plan on putting the packetsniffer i made a little while ago as a part of the "av" i mean its not a real antivirus but maybe someday it will be.
+Zip-Slip Prevention: Validates extraction paths to ensure malicious archives cannot write files to sensitive system directories.
 
+Risk-Based Filtering: Focuses on high-risk extensions like .exe, .ps1, .vbs, and .docm.
+
+🧬 High-Performance Hashing (Hasher)
+Asynchronous Processing: Uses SHA256.ComputeHashAsync to keep the UI/main thread responsive during heavy I/O.
+
+Smart File Access: Implements FileShare.ReadWrite to allow scanning of files even if they are currently opened by other applications.
+
+🌐 MalwareBazaar Integration
+Real-time Intelligence: Integrates with the Abuse.ch MalwareBazaar API to verify file hashes against millions of known malware samples.
+
+Professional Architecture: Uses a DTO (Data Transfer Object) pattern for clean JSON deserialization and a static HttpClient to prevent socket exhaustion.
+
+🛠️ Tech Stack
+Language: C# 12 / .NET 8
+
+Concepts: Asynchronous Programming, Singleton Pattern, DTOs, API Integration.
+
+Security: Cryptography (SHA256), Path Normalization, Archive Security.
+
+📈 Roadmap & Future Plans
+[ ] Magic Bytes Detection: Implement file signature headers (e.g., checking for MZ headers) to identify files even if their extensions are hidden.
+
+[ ] Quarantine System: Safely isolate infected files by encrypting them or moving them to a restricted directory.
+
+[ ] Unified Security Suite: Re-factor and integrate my previous Packet Sniffer to monitor network threats and file threats in one place.
+
+[ ] Performance Optimization: Leveraging the upcoming hardware upgrades (new CPU cooler) to handle multi-threaded full-disk scans.
+
+⚠️ Disclaimer
+This is an educational project currently in development. It is intended for research purposes and portfolio demonstration.
