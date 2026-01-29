@@ -1,4 +1,4 @@
-﻿// Time wasted on both refactoring the prototype and writting and debbuging : 32hrs 00mins
+﻿// Time wasted on both refactoring the prototype and writting and debbuging : 33hrs 00mins
 
 
 using Antivirus.core.Classes.logs;

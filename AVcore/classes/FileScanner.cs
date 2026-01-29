@@ -1,5 +1,6 @@
 ﻿
 using Antivirus.core.Classes.logs;
+using AVcore.classes.abuse.ch_client;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -43,7 +44,7 @@ namespace AVcore.classes
 
             Console.ResetColor();
         }
-        // iszip() might or might not be developed by github copilot ;), nah but on a more serious note i carefully look it through.
+        // iszip() might or might not be partially developed by github copilot ;), nah but on a more serious note i carefully look it through.
         public async Task IsZip(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -153,6 +154,13 @@ namespace AVcore.classes
                         try
                         {
                             await ScanFileAsync(destinationPath).ConfigureAwait(false);
+                            if(MalwareBazaarClient.IsVirus)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine($"\n Virus detected in extracted file: {entry.FullName} quarantine file;");
+                                await QuarantineFileAsync(destinationPath, entry.FullName);
+                                Console.ResetColor();
+                            }
                         }
                         catch (Exception exScan)
                         {
@@ -215,13 +223,32 @@ namespace AVcore.classes
         {
             // Method to display about information
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("This is a virus scanner developed by Tatu1335,");
+            Console.WriteLine("This is a virus scanner developed by Tatu12335,");
 
             Console.ResetColor();
         }
-        public void QuarantineFile()
+        public async Task QuarantineFileAsync(string filepath,string? entry)
         {
-            // Method to quarantine an infected file
+            
+            var quarantinefolder = Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tatus-Antivirus", "quarantine"));
+            
+            if (Directory.Exists(filepath))  return ;
+            var filename = entry ?? Path.GetFileName(filepath);
+            var destPath = Path.Combine(quarantinefolder.FullName, $"{filename}_{DateTime.Now:yyyyMMddHHmmss}.quar");
+            try
+            {
+                File.Move(filepath, destPath);
+                logmsg.Instance.Log($" File <{filepath}> quarantined to <{destPath}>");
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($" Failed to quarantine file <{filepath}>: {ex.Message}");
+                Console.ResetColor();
+                logmsg.Instance.Log($" Failed to quarantine file <{filepath}>: {ex.Message}");
+            }
+
+
         }
         public void DeleteFile()
         {
