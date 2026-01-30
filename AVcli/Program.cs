@@ -99,7 +99,7 @@ class Program1
 
             try
             {
-                // This doesnt look right
+                // This doesnt look right, the whole code from this method looks spaghetti and illogical
                 var files = Directory.EnumerateFiles(curDir);
 
                 foreach (var file in files)
@@ -122,7 +122,7 @@ class Program1
 
                 foreach (var d in directories)
                 {
-                    //var directories2 = Directory.EnumerateDirectories(d,"*");
+                    
                     var files2 = Directory.EnumerateFiles(d, "*");
 
                     foreach (var file1 in files2)

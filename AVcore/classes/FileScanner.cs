@@ -57,7 +57,7 @@ namespace AVcore.classes
 
             if (!File.Exists(path))
             {
-                //do nothing
+                
                 return;
             }
 
@@ -142,22 +142,22 @@ namespace AVcore.classes
                         {
                             using var entryStream = entry.Open();
                             using var destFs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                            await entryStream.CopyToAsync(destFs).ConfigureAwait(false);
+                            await entryStream.CopyToAsync(destFs);
                         }
-                        catch (Exception exEntry)
+                        catch (Exception ex)
                         {
-                            logmsg.Instance.Log($" Failed to extract entry {entry.FullName}: {exEntry.Message}");
+                            logmsg.Instance.Log($" Failed to extract entry {entry.FullName}: {ex.Message}");
                             continue;
                         }
 
                         // Now scan the extracted file
                         try
                         {
-                            await ScanFileAsync(destinationPath).ConfigureAwait(false);
+                            await ScanFileAsync(destinationPath);
                             if(MalwareBazaarClient.IsVirus)
                             {
                                 Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine($"\n Virus detected in extracted file: {entry.FullName} quarantine file;");
+                                Console.WriteLine($"\n Virus detected in extracted file: {entry.FullName} quarantine file");
                                 await QuarantineFileAsync(destinationPath, entry.FullName);
                                 Console.ResetColor();
                             }

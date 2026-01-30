@@ -44,14 +44,13 @@ namespace AVcore.classes
 
 
                         fS.Position = 0;
-                        byte[] hashvalue = await sha256.ComputeHashAsync(fS).ConfigureAwait(false);
+                        byte[] hashvalue = await sha256.ComputeHashAsync(fS);
 
                         string hashhex = Convert.ToHexString(hashvalue).ToLowerInvariant();
 
                         try
                         {
-
-                            await MalwareBazaarClient.GetClient.CheckHashStatus(hashhex).ConfigureAwait(false);
+                            await MalwareBazaarClient.GetClient.CheckHashStatus(hashhex);
 
                         }
                         catch (Exception ex)
@@ -65,7 +64,7 @@ namespace AVcore.classes
                     }
                     else if (attempt >= maxRetries)
                     {
-                        throw new Exception(" Max-retries is 10, could not openfile");
+                        throw new Exception(" Max-retries is 10, could not open file!");
                     }
                 }
 
