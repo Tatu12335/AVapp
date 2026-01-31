@@ -12,8 +12,6 @@ Zip-Bomb Protection: Monitors compression ratios and uncompressed sizes to preve
 
 Zip-Slip Prevention: Validates extraction paths to ensure malicious archives cannot write files to sensitive system directories.
 
-Risk-Based Filtering: Focuses on high-risk extensions like .exe, .ps1, .vbs, and .docm.
-
 🧬 High-Performance Hashing (Hasher)
 Asynchronous Processing: Uses SHA256.ComputeHashAsync to keep the UI/main thread responsive during heavy I/O.
 
