@@ -20,14 +20,13 @@ Smart File Access: Implements FileShare.ReadWrite to allow scanning of files eve
 MalwareBazaar Integration
 Real-time Intelligence: Integrates with the Abuse.ch MalwareBazaar API to verify file hashes against millions of known malware samples.
 
-Professional Architecture: Uses a DTO (Data Transfer Object) pattern for clean JSON deserialization and a static HttpClient to prevent socket exhaustion.
-
 🛠️ Tech Stack
-Language: C# 12 / .NET 8
+.NET 8
 
-Concepts: Asynchronous Programming, Singleton Pattern, DTOs, API Integration.
+Concepts: Asynchronous Programming, Singleton Pattern,, API Integration.
 
 Security: Cryptography (SHA256), Path Normalization, Archive Security.
 
 ⚠️ Disclaimer
 This is an educational project currently in development. It is intended for research purposes and portfolio demonstration.
+Also This project Is going through a full rewrite as of 22.3.2026 at [https://github.com/Tatu12335/AvCore] 
